@@ -1,0 +1,7 @@
+interface:
+  display_name: "Apify Reddit Scraper"
+  short_description: "Use Apify Reddit scraping workflows"
+  icon_small: "./assets/reddit-scraper-small.svg"
+  icon_large: "./assets/reddit-scraper-large.svg"
+  brand_color: "#FF6B35"
+  default_prompt: "Use $apify-reddit-scraper to collect Reddit posts, comments, or subreddit data with the Apify Actor API."
