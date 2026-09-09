@@ -1,6 +1,6 @@
 interface:
   display_name: "Apify Reddit Scraper"
-  short_description: "Use Apify Reddit scraping workflows"
+  short_description: "Scrape Reddit posts, comments, subreddits and users with the Apify Reddit Scraper Actor"
   icon_small: "./assets/reddit-scraper-small.svg"
   icon_large: "./assets/reddit-scraper-large.svg"
   brand_color: "#FF6B35"

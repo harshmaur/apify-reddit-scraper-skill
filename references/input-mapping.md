@@ -1,75 +1,118 @@
-# Input Mapping
+# Input mapping — apify-reddit-scraper
 
-Map user intent to the Actor's real input fields.
+User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; the Actor rejects unknown ones with `missing_targets` when nothing valid remains.
 
-## Core Rules
+## Targets (at least one)
 
-- Use `startUrls` for direct Reddit URLs.
-- Use `searchTerms` for keyword-driven searches.
-- Use `withinCommunity` only with a single subreddit in the form `r/name`.
-- Use `searchPosts`, `searchComments`, and `searchCommunities` to select result type.
-- Use `crawlCommentsPerPost` when the user wants comments under matching posts.
+| User intent | Input |
+|---|---|
+| Search Reddit for a keyword or brand | `"searchTerms": ["<term>"]` |
+| Several keywords | `"searchTerms": ["a", "b", "c"]` (one search each; free plans: first 40) |
+| Search only inside one subreddit | `"searchTerms": [...], "withinCommunity": "r/<name>"` |
+| Scrape a subreddit in bulk | `"subredditUrls": ["<name>"]` or `["https://www.reddit.com/r/<name>/"]` |
+| Scrape one or more post threads | `"startUrls": [{"url": "https://www.reddit.com/r/<sub>/comments/<id>/..."}]` |
+| Scrape a user's posts and comments | `"startUrls": [{"url": "https://www.reddit.com/user/<name>/"}]` |
+| Scrape a subreddit listing with a specific sort | `"startUrls": [{"url": "https://www.reddit.com/r/<name>/top/?t=week"}]` |
+| Scrape a Reddit search-results page the user already has | `"startUrls": [{"url": "https://www.reddit.com/search/?q=..."}]` |
 
-## Intent Mapping Table
+## What to return
 
-| User intent | Actor fields |
-| --- | --- |
-| Scrape a subreddit page | `startUrls: [{ "url": "https://www.reddit.com/r/<name>/" }]` |
-| Scrape a specific Reddit post | `startUrls` with the post URL |
-| Scrape a Reddit user | `startUrls` with the user URL |
-| Search Reddit for a keyword | `searchTerms`, `searchPosts: true` |
-| Search comments for a keyword | `searchTerms`, `searchComments: true`, `searchPosts: false` |
-| Search communities by keyword | `searchTerms`, `searchCommunities: true`, `searchPosts: false`, `searchComments: false` |
-| Limit keyword search to one subreddit | `withinCommunity: "r/<name>"` |
-| Pull comments from found posts | `crawlCommentsPerPost: true` plus non-zero comment limits |
-| Prioritize fresh posts | `searchSort: "new"` |
-| Prioritize popular posts | `searchSort: "top"` or `searchSort: "hot"` |
-| Limit to recent period | `searchTime: "hour" | "day" | "week" | "month" | "year"` |
-| Include adult content | `includeNSFW: true` |
-| Improve comment-search accuracy in a subreddit | `fastMode: false` |
+| User intent | Input |
+|---|---|
+| Posts only (default) | `"searchPosts": true, "searchComments": false, "searchCommunities": false` |
+| Comments that mention the term | `"searchComments": true, "searchPosts": false, "maxCommentsCount": 400` |
+| Communities about a topic | `"searchCommunities": true, "maxCommunitiesCount": 20` |
+| Posts **and** their comment threads | `"crawlCommentsPerPost": true, "maxCommentsPerPost": 50` |
+| Only posts with a flair | `"onlyWithFlair": true` |
+| Include adult content | `"includeNSFW": true` |
 
-## Recommended Defaults
+## Ranking and time
 
-Use these unless the user asks for something else:
+| User intent | Input |
+|---|---|
+| Newest first (monitoring) | `"searchSort": "new"` |
+| Best keyword match | `"searchSort": "relevance"` |
+| Highest scoring | `"searchSort": "top"` |
+| Currently active | `"searchSort": "hot"` |
+| Most discussed | `"searchSort": "comments"` |
+| Reddit's relative window | `"searchTime": "hour" | "day" | "week" | "month" | "year" | "all"` |
+| Explicit date window (posts) | `"postedAfter": "2026-08-01", "postedBefore": "2026-08-31"` |
+| Explicit date window (comments) | `"commentedAfter": "2026-08-01", "commentedBefore": "2026-08-31"` |
+
+`searchSort`, `searchTime` and `withinCommunity` apply to `searchTerms` only, never to `startUrls`.
+
+## Limits
+
+| Field | Default | Meaning |
+|---|---|---|
+| `maxPostsCount` | 50 | Total posts across every input (max 50,000; Reddit itself stops near 1,000 per listing) |
+| `maxCommentsCount` | 400 | Comments per keyword when `searchComments` is on |
+| `maxCommentsPerPost` | 200 | Comments per post when `crawlCommentsPerPost` is on |
+| `maxCommunitiesCount` | 2 | Communities per keyword when `searchCommunities` is on |
+| `fastMode` | `true` | Keep on; off requires 2048 MB memory |
+
+## AI enrichment (paid Apify plans)
+
+| User intent | Input |
+|---|---|
+| Sentiment / intent labels on every row | `"aiAnalysis": true` → adds `sentimentLabel` and related fields |
+| Custom yes/no labels | `"customLabels": {"is_buying_intent": "The author is looking to buy or switch tools"}` |
+
+## Delivery (MCP connectors)
+
+| User intent | Input |
+|---|---|
+| Post each hit to Slack | `"mcpConnector": "<connectorId>", "mcpTarget": "<channelId>", "mcpMode": "perPost"` |
+| One digest to Notion | `"mcpConnector": "<connectorId>", "mcpTarget": "<databaseId>", "mcpMode": "summary"` |
+| Include top comments in each message | `"mcpComments": "bundle", "mcpCommentsPerPost": 5` (needs `crawlCommentsPerPost`) |
+| Custom message shape | `"mcpMessage": "**{{title}}** in {{communityName}}\n{{postUrl}}"` |
+
+## Worked examples
+
+Brand monitoring, last 30 days, with comments, to Slack:
 
 ```json
 {
-  "searchPosts": true,
-  "searchComments": false,
-  "searchCommunities": false,
+  "searchTerms": ["Notion", "notion.so"],
   "searchSort": "new",
-  "searchTime": "all",
-  "includeNSFW": false,
-  "maxPostsCount": 25,
-  "maxCommentsCount": 50,
-  "maxCommentsPerPost": 10,
-  "maxCommunitiesCount": 10,
-  "fastMode": true,
-  "crawlCommentsPerPost": false
+  "postedAfter": "2026-08-10",
+  "maxPostsCount": 200,
+  "crawlCommentsPerPost": true,
+  "maxCommentsPerPost": 20,
+  "mcpConnector": "<connectorId>",
+  "mcpTarget": "<slackChannelId>",
+  "mcpMessage": "**{{title}}** in {{communityName}} ({{score}}↑)\n{{postUrl}}"
 }
 ```
 
-## Limits Guidance
+Lead generation inside one community:
 
-- `maxPostsCount`: cap top-level posts returned
-- `maxCommentsCount`: cap comment results or collected comments
-- `maxCommentsPerPost`: cap comments gathered per post when `crawlCommentsPerPost` is enabled
-- `maxCommunitiesCount`: cap returned communities during community search
+```json
+{
+  "searchTerms": ["CRM recommendation", "switching from HubSpot", "best CRM for"],
+  "withinCommunity": "r/smallbusiness",
+  "searchSort": "new",
+  "searchTime": "month",
+  "maxPostsCount": 150
+}
+```
 
-Set counts to `0` when you explicitly want to disable that result type.
+Full thread:
 
-## Sorting Guidance
+```json
+{
+  "startUrls": [{ "url": "https://www.reddit.com/r/webdev/comments/abc123/example/" }],
+  "crawlCommentsPerPost": true,
+  "maxCommentsPerPost": 1000
+}
+```
 
-Prefer:
+Whole subreddit, newest first, posts only:
 
-- `new` for monitoring or recent trend checks
-- `top` for best-performing content
-- `hot` for currently active discussions
-- `relevance` when the user prioritizes precise keyword matching
-
-## Common Mistakes
-
-- Using `query` instead of the actual field `searchTerms`
-- Passing `withinCommunity` as just `technology` instead of `r/technology`
-- Forgetting `startUrls` or `searchTerms`, which causes the Actor to fail
-- Leaving `searchPosts` enabled when the user asked for comments only
+```json
+{
+  "subredditUrls": ["r/SaaS", "r/startups"],
+  "maxPostsCount": 1000,
+  "postedAfter": "2026-08-01"
+}
+```

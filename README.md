@@ -1,72 +1,40 @@
-# Apify Reddit Scraper Skill
+# Apify Reddit Scraper — agent skill
 
-Portable `SKILL.md` package for Codex and Claude-compatible runtimes that uses the existing Apify Actor API for Reddit scraping.
+A portable [`SKILL.md`](SKILL.md) that teaches Claude Code, Codex, Cursor, Gemini CLI, Windsurf and any other [agentskills.io](https://agentskills.io/specification)-compatible agent how to pull Reddit data with the [Reddit Scraper](https://apify.com/harshmaur/reddit-scraper) Apify Actor: keyword search across Reddit or inside one subreddit, whole-subreddit listings, post permalinks with full comment threads, user histories and community info, with date windows and optional delivery into Slack, Notion, Google Sheets or Airtable through Apify MCP connectors.
 
-## What It Does
-
-This skill helps an agent:
-
-- turn Reddit research requests into valid Apify Actor input
-- run the existing `harshmaur/reddit-scraper` Actor
-- fetch dataset results
-- summarize trends, comments, communities, users, and monitoring results
-
-It does not create or require a new MCP server.
+The same skill is submitted to [apify/awesome-skills](https://github.com/apify/awesome-skills) as `apify-reddit-scraper`.
 
 ## Install
 
-### Codex
-
-Copy this repo into:
-
 ```bash
-~/.codex/skills/apify-reddit-scraper
+npx skills add https://github.com/harshmaur/apify-reddit-scraper-skill
 ```
 
-### Claude
-
-Copy this repo into:
-
-```bash
-~/.claude/skills/apify-reddit-scraper
-```
+Or copy this folder to `~/.claude/skills/apify-reddit-scraper` (Claude Code) or `~/.codex/skills/apify-reddit-scraper` (Codex).
 
 ## Auth
 
-Set an Apify token before using the skill:
+Either `apify login` (Apify CLI) or `export APIFY_TOKEN=...` from [Apify Console → Integrations](https://console.apify.com/settings/integrations). Agents that prefer MCP can instead connect to `https://mcp.apify.com/?tools=harshmaur/reddit-scraper`.
 
-```bash
-export APIFY_TOKEN="your-token-here"
-```
+## What it teaches the agent
 
-## Package Contents
+- Which input field matches the request: `searchTerms`, `withinCommunity`, `subredditUrls`, `startUrls`, date filters, comment crawling.
+- Turning a descriptive topic into literal Reddit keywords (Reddit search is not semantic).
+- Cost estimation before running (pay per result, $0.02 per run + $0.002 per item).
+- The traps: permalinks in `subredditUrls` silently return nothing, the ~1,000-post ceiling per listing, `/s/` share links, `fastMode` memory.
+- Reading the output: `dataType` rows for posts, comments, communities and users.
+- Setting up recurring monitoring with Apify Schedules and MCP-connector delivery.
 
-- `SKILL.md`: trigger rules and workflow
-- `agents/openai.yaml`: Codex-facing metadata
-- `references/api-recipes.md`: Apify API examples
-- `references/input-mapping.md`: user-intent to Actor-field mapping
-- `references/examples.md`: reusable request patterns
-- `assets/`: UI icons for skill marketplaces and launchers
+## Contents
+
+- `SKILL.md` — triggers, workflow, routing, troubleshooting
+- `references/input-mapping.md` — user intent → input field table with worked examples
+- `references/gotchas.md` — cost tables, traps, error recovery, MCP delivery fields
+- `agents/openai.yaml`, `assets/` — Codex-facing metadata and icons
 
 ## Source Actor
 
-- Apify store: https://apify.com/harshmaur/reddit-scraper
-- Actor API ID: `harshmaur~reddit-scraper`
+- Store page: https://apify.com/harshmaur/reddit-scraper
+- API id: `harshmaur~reddit-scraper`
 
-## Suggested Tags
-
-- `skill`
-- `skill-md`
-- `codex`
-- `claude`
-- `apify`
-- `reddit`
-- `agent-skill`
-
-## Publishing Targets
-
-- GitHub
-- Smithery Skills
-- skillmarketplace.ai
-- Agensi
-- other SKILL.md-compatible indexes
+Disclosure: the skill routes to a paid Actor built by the author. No affiliate links.
