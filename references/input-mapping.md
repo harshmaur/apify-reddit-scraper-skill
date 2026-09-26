@@ -1,6 +1,6 @@
 # Input mapping — apify-reddit-scraper
 
-User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; unknown ones are ignored, and when nothing valid remains the run finishes SUCCEEDED with 0 items (`emptyReason` in `RUN-SUMMARY`, nothing charged) rather than failing.
+User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; the Actor rejects unknown ones with `missing_targets` when nothing valid remains.
 
 ## Targets (at least one)
 
@@ -19,8 +19,7 @@ User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; unkno
 
 | User intent | Input |
 |---|---|
-| Posts, matching comments and each post's thread (Actor default) | `"searchPosts": true, "searchComments": true, "crawlCommentsPerPost": true` |
-| Posts only | `"searchPosts": true, "searchComments": false, "searchCommunities": false, "crawlCommentsPerPost": false` |
+| Posts only (default) | `"searchPosts": true, "searchComments": false, "searchCommunities": false` |
 | Comments that mention the term | `"searchComments": true, "searchPosts": false, "maxCommentsCount": 400` |
 | Communities about a topic | `"searchCommunities": true, "maxCommunitiesCount": 20` |
 | Posts **and** their comment threads | `"crawlCommentsPerPost": true, "maxCommentsPerPost": 50` |
@@ -40,21 +39,19 @@ User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; unkno
 | Explicit date window (posts) | `"postedAfter": "2026-08-01", "postedBefore": "2026-08-31"` |
 | Explicit date window (comments) | `"commentedAfter": "2026-08-01", "commentedBefore": "2026-08-31"` |
 
-`searchSort`, `searchTime` and `withinCommunity` apply to `searchTerms` only, never to `startUrls`. Once `postedAfter` or `postedBefore` is set, `searchSort` and `searchTime` are ignored and the run collects newest-first.
+`searchSort`, `searchTime` and `withinCommunity` apply to `searchTerms` only, never to `startUrls`.
 
 ## Limits
 
 | Field | Default | Meaning |
 |---|---|---|
-| `maxPostsCount` | 50 | Posts **per search term** (and per subreddit or profile URL) — 4 terms × 8 returned 32 posts. The schema title says "total across all inputs"; measured runs and the README say per term. Max 50,000; Reddit itself stops near 1,000 per listing |
-| `searchComments` | `true` | Keyword search also returns matching comments |
-| `crawlCommentsPerPost` | `true` | Every post found also returns its comment thread |
+| `maxPostsCount` | 50 | Total posts across every input (max 50,000; Reddit itself stops near 1,000 per listing) |
 | `maxCommentsCount` | 400 | Comments per keyword when `searchComments` is on |
 | `maxCommentsPerPost` | 200 | Comments per post when `crawlCommentsPerPost` is on |
 | `maxCommunitiesCount` | 2 | Communities per keyword when `searchCommunities` is on |
 | `fastMode` | `true` | Keep on; off requires 2048 MB memory |
 
-## AI enrichment (billed per row on top of results — see gotchas; the "free plans ignore it" note in the schema did not hold in a measured run)
+## AI enrichment (paid Apify plans)
 
 | User intent | Input |
 |---|---|
