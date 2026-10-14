@@ -33,10 +33,10 @@ Free Apify plans: results beyond the plan's monthly credit stop the crawl (the A
 1. **Post permalinks in `subredditUrls` are dropped silently.** The run SUCCEEDS with 0 items and no error. Permalinks belong in `startUrls`.
 2. **Reddit search is literal.** Long descriptive phrases return nothing. Convert topics into short keywords and run several `searchTerms`.
 3. **~1,000-post ceiling per listing.** Reddit stops paginating any search or subreddit listing around 1,000 posts regardless of `maxPostsCount`. Use `postedAfter`/`postedBefore` windows to walk further back; posts older than the ceiling in a busy subreddit are not reachable at all.
-4. **`crawlCommentsPerPost` multiplies cost.** 200 posts × default `maxCommentsPerPost` 200 can be 40,000 rows. Set `maxCommentsPerPost` deliberately.
+4. **`crawlCommentsPerPost` multiplies cost.** 200 posts × default `maxCommentsPerPost` 200 can be 40,000 rows. Set `maxCommentsPerPost` deliberately. A very large thread returns about 600–3,000 comments, even when `maxCommentsPerPost` is higher.
 5. **Search options don't apply to `startUrls`.** `searchSort`, `searchTime` and `withinCommunity` only shape `searchTerms` runs. For a subreddit URL, sort by putting it in the URL (`/r/x/new/`, `/r/x/top/?t=week`).
-6. **`/s/` share links can't be scraped.** Resolve to the canonical `/comments/<id>/` permalink first.
-7. **Disabling `fastMode` needs 2048 MB.** Leave it on unless exhaustive comment search inside one subreddit is the point.
+6. **`/s/` share links work in `startUrls`.** The Actor resolves each one to the post or profile it points to. An expired link resolves to the subreddit listing, not the post.
+7. **Some fields are always `null`.** Since 2026-10-13 the Actor reads Reddit's HTML pages, and Reddit does not show these values to logged-out visitors: `membersCount`, `onlineUsersCount` and `description` on community rows, `subredditSubscribers` on post rows, `awardeeKarma` and `awarderKarma` on user rows. Do not rank or filter communities by size. `fastMode` has no effect any more, so do not send it.
 8. **Dates are UTC, `YYYY-MM-DD`.** `postedAfter` is 00:00 UTC of that day, `postedBefore` is 23:59:59 UTC.
 9. **NSFW is off by default.** Adult subreddits and posts need `includeNSFW: true`; NSFW communities also only appear in community search when it is on.
 10. **`removedByCategory` is the only reliable removal signal.** Fields like `removed_by` or `banned_by` are moderator-only and null for everyone else.
@@ -47,7 +47,7 @@ Free Apify plans: results beyond the plan's monthly credit stop the crawl (the A
 |---|---|---|
 | `missing_targets` | No `searchTerms`, `startUrls` or `subredditUrls` (often an invented field name like `query`) | Use the real field names |
 | `invalid_date_range` | `postedAfter` > `postedBefore`, or bad date format | Swap or fix to `YYYY-MM-DD` |
-| `excessive_memory` warning | Run memory set above what fast mode needs | Harmless; leave default memory |
+| `excessive_memory` warning | Run memory set above 512 MB; every run fits in 512 MB | Harmless; leave default memory |
 | 0 items, SUCCEEDED | Permalinks in `subredditUrls`, or literal search miss | See traps 1 and 2 |
 | Run summary lists skipped targets | Private/banned/quarantined community, deleted user, or a 404 | Terminal; report it, don't retry |
 | Slow run (>5 min) | Full subreddit + comments, or many `searchTerms` | Poll asynchronously; or split into smaller runs |

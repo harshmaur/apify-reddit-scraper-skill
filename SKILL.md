@@ -57,7 +57,7 @@ Out of scope (the boundary):
 | Keywords, a brand, a product, a phrase | `searchTerms` (array) | One search per term. Keep terms short and literal (`"notion alternative"`, not a sentence). Free plans search the first 40 terms per run. |
 | Keywords + "only in r/X" | `searchTerms` + `withinCommunity` | Accepts `developers`, `r/developers` or the full subreddit URL. |
 | A subreddit to scrape in bulk | `subredditUrls` (array of names or community URLs) | Fetches far more posts than a plain listing. **Never put post permalinks here** — they are dropped silently and the run finishes with 0 items. |
-| Post, user-profile, subreddit or search-page URLs | `startUrls` (array of `{ "url": ... }`) | Search options (sort/time/community) do NOT apply to these. |
+| Post, user-profile, subreddit or search-page URLs | `startUrls` (array of `{ "url": ... }`) | Search options (sort/time/community) do NOT apply to these. `/s/` share links work too; the Actor resolves them. |
 | "since <date>" / "between <dates>" | `postedAfter`, `postedBefore` (`YYYY-MM-DD`) | Also `commentedAfter` / `commentedBefore` for comments. Results are fetched newest-first and stop early once older than the window. |
 | "with comments" / "full thread" | `crawlCommentsPerPost: true` + `maxCommentsPerPost` | Multiplies result count and cost — see gotchas. |
 | "comments that mention X" | `searchComments: true`, `searchPosts: false` | Comment search across Reddit. |
@@ -81,15 +81,14 @@ Start from these defaults and change only what the request needs:
   "maxPostsCount": 50,
   "crawlCommentsPerPost": false,
   "maxCommentsPerPost": 50,
-  "includeNSFW": false,
-  "fastMode": true
+  "includeNSFW": false
 }
 ```
 
 - `searchSort`: `new` for monitoring, `relevance` for precise matching, `top` / `hot` for what performed, `comments` for the most discussed.
 - `searchTime`: `hour` | `day` | `week` | `month` | `year` | `all`. Prefer `postedAfter`/`postedBefore` when the user names dates.
 - `maxPostsCount` is the **total** across all inputs, max 50,000. Reddit itself caps any single listing or search at roughly 1,000 posts; for more history split by date windows or by subreddit.
-- Leave `fastMode: true` and the default memory. Turning fast mode off needs 2048 MB and is only worth it for exhaustive subreddit comment search.
+- Keep the default memory (512 MB). Every run fits in it. Do not send `fastMode`: it has no effect, and the Actor ignores it.
 - Do not pass `proxy`; the Actor manages its own proxying.
 
 Fetch the live schema if a field is in doubt:
@@ -127,8 +126,10 @@ Every row carries `dataType` (`post` | `comment` | `community` | `user`). Key fi
 |---|---|
 | `post` | `title`, `body`, `postUrl`, `communityName`, `authorName`, `score`, `commentsCount`, `createdAt`, `flair`, `searchTerm`, `removedByCategory` (why a `[removed]` post was pulled: `moderator`, `automod_filtered`, `reddit`, `author`, `deleted`) |
 | `comment` | `body`, `url`, `postId`, `postTitle`, `authorName`, `score`, `commentCreatedAt`, `parentId`, `depth` |
-| `community` | `name`, `title`, `description`, `membersCount`, `onlineUsersCount`, `nsfw`, `rules` |
+| `community` | `name`, `title`, `publicDescription`, `nsfw`, `rules` |
 | `user` | `username`, `totalKarma`, `bio`, `followersCount`, `createdAt` |
+
+Since 2026-10-13 the Actor reads Reddit's HTML pages, because Reddit closed its logged-out `.json` endpoints. Field names did not change, but Reddit does not show some values to logged-out visitors, so these fields are always `null`: `membersCount`, `onlineUsersCount` and `description` on `community` rows, `subredditSubscribers` on `post` rows, and `awardeeKarma` and `awarderKarma` on user rows. Do not rank or filter communities by size from this data.
 
 Report back: what was searched (exact input), item count by `dataType`, whether a limit or date window truncated the run, a handful of representative rows with `postUrl` links, and the next parameter change if the set was too broad or too thin. Group by `communityName` or `searchTerm` when several were used. Never assert sentiment from titles alone; quote the `body`.
 
@@ -165,7 +166,8 @@ See <https://github.com/apify/mcpc>.
 - **Fewer posts than requested on a big subreddit** → Reddit's ~1,000-per-listing ceiling. Split with `postedAfter`/`postedBefore` windows or add `subredditUrls` per community.
 - **`invalid_date_range`** → `postedAfter` is later than `postedBefore`, or the format isn't `YYYY-MM-DD`.
 - **`missing_targets`** → none of `searchTerms`, `startUrls`, `subredditUrls` was set (a common cause is using an invented field like `query` or `keywords`).
-- **`/s/` share links** (`reddit.com/r/x/s/abc`) → resolve them in a browser to the full permalink first; the short form cannot be scraped.
+- **`/s/` share links** (`reddit.com/r/x/s/abc`) → put them in `startUrls` as they are. The Actor resolves each one to its post or profile. An expired link resolves to the subreddit listing, not the post.
+- **`membersCount`, `onlineUsersCount` or `subredditSubscribers` is `null`** → expected. Reddit does not show these values to logged-out visitors. Nothing to retry.
 - **Private, banned or quarantined subreddit** → terminal skip, noted in the run summary; nothing to retry.
 - **Cost higher than expected** → `crawlCommentsPerPost` was on. Re-run with it off, or lower `maxCommentsPerPost`.
 - For cost tables and recovery flows, see [references/gotchas.md](references/gotchas.md); for the full field mapping, [references/input-mapping.md](references/input-mapping.md).
