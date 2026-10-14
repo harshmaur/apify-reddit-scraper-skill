@@ -13,6 +13,7 @@ User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; the A
 | Scrape one or more post threads | `"startUrls": [{"url": "https://www.reddit.com/r/<sub>/comments/<id>/..."}]` |
 | Scrape a user's posts and comments | `"startUrls": [{"url": "https://www.reddit.com/user/<name>/"}]` |
 | Scrape a subreddit listing with a specific sort | `"startUrls": [{"url": "https://www.reddit.com/r/<name>/top/?t=week"}]` |
+| Scrape a `/s/` share link | `"startUrls": [{"url": "https://www.reddit.com/r/<sub>/s/<token>"}]` (the Actor resolves it to the post or profile) |
 | Scrape a Reddit search-results page the user already has | `"startUrls": [{"url": "https://www.reddit.com/search/?q=..."}]` |
 
 ## What to return
@@ -47,9 +48,8 @@ User phrasing → `harshmaur/reddit-scraper` input. Field names are exact; the A
 |---|---|---|
 | `maxPostsCount` | 50 | Total posts across every input (max 50,000; Reddit itself stops near 1,000 per listing) |
 | `maxCommentsCount` | 400 | Comments per keyword when `searchComments` is on |
-| `maxCommentsPerPost` | 200 | Comments per post when `crawlCommentsPerPost` is on |
+| `maxCommentsPerPost` | 200 | Comments per post when `crawlCommentsPerPost` is on. A very large thread returns about 600–3,000 comments, even when this is higher |
 | `maxCommunitiesCount` | 2 | Communities per keyword when `searchCommunities` is on |
-| `fastMode` | `true` | Keep on; off requires 2048 MB memory |
 
 ## AI enrichment (paid Apify plans)
 
