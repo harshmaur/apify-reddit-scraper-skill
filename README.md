@@ -21,7 +21,7 @@ Either `apify login` (Apify CLI) or `export APIFY_TOKEN=...` from [Apify Console
 - Which input field matches the request: `searchTerms`, `withinCommunity`, `subredditUrls`, `startUrls`, date filters, comment crawling.
 - Turning a descriptive topic into literal Reddit keywords (Reddit search is not semantic).
 - Cost estimation before running (pay per result, $0.02 per run + $0.002 per item).
-- The traps: permalinks in `subredditUrls` silently return nothing, the ~1,000-post ceiling per listing, fields Reddit hides from logged-out visitors (always `null`).
+- The traps: permalinks in `subredditUrls` silently return nothing, the ~1,000-post ceiling per listing, fields that can be `null` when a row comes from an HTML page.
 - Reading the output: `dataType` rows for posts, comments, communities and users.
 - Setting up recurring monitoring with Apify Schedules and MCP-connector delivery.
 
