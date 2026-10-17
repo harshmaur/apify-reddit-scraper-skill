@@ -1,0 +1,16 @@
+{
+  "name": "apify-reddit-scraper",
+  "description": "Reddit Scraper skill and Apify MCP tool for Claude Code: search Reddit and export posts, comments, subreddits and users as JSON.",
+  "owner": {
+    "name": "Harsh Maur",
+    "url": "https://github.com/harshmaur"
+  },
+  "plugins": [
+    {
+      "name": "apify-reddit-scraper",
+      "source": "./",
+      "description": "Search Reddit and export posts, full comment threads, subreddits and user history as JSON with the Reddit Scraper Apify Actor. No Reddit API key or Reddit app.",
+      "category": "data"
+    }
+  ]
+}
