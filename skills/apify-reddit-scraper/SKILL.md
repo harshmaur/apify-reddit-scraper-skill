@@ -146,8 +146,8 @@ Every row carries `dataType` (`post` | `comment` | `community` | `user_profile`)
 
 | `dataType` | Fields you will use |
 |---|---|
-| `post` | `title`, `body`, `postUrl`, `communityName`, `authorName`, `score`, `commentsCount`, `createdAt`, `flair`, `removedByCategory` (why a `[removed]` post was pulled: `moderator`, `automod_filtered`, `reddit`, `author`, `deleted`). `searchTerm` is documented but in practice absent (0 of 158 posts in four measured runs) — attribute posts to terms by arithmetic (per-term `maxPostsCount`), not from the row |
-| `comment` | `body`, `url`, `postId`, `authorName`, `score`, `commentCreatedAt`, `parentId`, `depth`. `postTitle` is documented as present only when the parent post was also fetched, but was absent on all 331 comments in four measured runs even with `crawlCommentsPerPost` on — join comments to posts on `postId` |
+| `post` | `title`, `body`, `postUrl`, `communityName`, `authorName`, `score`, `commentsCount`, `createdAt`, `flair`, `removedByCategory` (why a `[removed]` post was pulled: `moderator`, `automod_filtered`, `reddit`, `author`, `deleted`). `searchTerm` names the keyword that found the post |
+| `comment` | `body`, `url`, `postId`, `authorName`, `score`, `commentCreatedAt`, `parentId`, `depth`. `postTitle` and `postCommentsCount` are set on comments from comment search and user profiles. Comments collected with `crawlCommentsPerPost` leave them out (no `postUrl` either) — join those to their post on `postId` |
 | `community` | `name`, `title`, `publicDescription`, `membersCount`, `nsfw`, `rules` |
 | `user_profile` | `username`, `totalKarma`, `bio`, `followersCount`, `createdAt` |
 
